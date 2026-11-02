@@ -47,12 +47,12 @@ python parameter_experiments.py
 
 | Параметр | Значение | Смысл |
 |---|---:|---|
-| $N_{IN}$ | 10 | размер входного окна |
-| $N_{HIDDEN}$ | 5 | нейроны скрытого слоя |
-| $N_{OUT}$ | 5 | размер выходного окна |
-| $N_{CROSS}$ | 3 | число перекрёстных точек |
-| $\Delta$ | 0.05 | отступ нормировки от 0 и 1 |
-| $\lambda$ | 0.01 | шаг градиентного спуска |
+| N_IN | 10 | размер входного окна |
+| N_HIDDEN | 5 | нейроны скрытого слоя |
+| N_OUT | 5 | размер выходного окна |
+| N_CROSS | 3 | число перекрёстных точек |
+| Delta | 0.05 | отступ нормировки от 0 и 1 |
+| lambda | 0.01 | шаг градиентного спуска |
 | epochs | 1000 | максимум эпох |
 | batch size | 16 | размер мини-батча |
 | train ratio | 0.8 | доля обучающей выборки |
@@ -69,51 +69,37 @@ python parameter_experiments.py
 
 Каждый нейрон суммирует входящие сигналы $S_i$:
 
-$$
-S = \sum_i S_i \tag{1}
-$$
+$$S = \sum_i S_i \qquad (1)$$
 
 Суммарный сигнал пропускается через функцию активации $f$:
 
-$$
-x = f(S) \tag{2}
-$$
+$$x = f(S) \qquad (2)$$
 
 В проекте используется сигмоида:
 
-$$
-\sigma(S) = \frac{1}{1 + e^{-S}} \tag{3}
-$$
+$$\sigma(S) = \frac{1}{1 + e^{-S}} \qquad (3)$$
 
 Свойства: при $S \to +\infty$ значение $\sigma(S) \to 1$; при $S \to -\infty$ значение $\sigma(S) \to 0$; при $S = 0$ значение $\sigma(S) = 1/2$. Сигмоида плавно переходит из 0 в 1, что удобно для градиентного обучения.
 
 Производная сигмоиды:
 
-$$
-\sigma'(S) = \sigma(S)\,(1 - \sigma(S)) \tag{4}
-$$
+$$\sigma'(S) = \sigma(S) (1 - \sigma(S)) \qquad (4)$$
 
 ### 2. Нейронный слой и перцептрон
 
 Нейронный слой - набор одинаковых нейронов без связей внутри слоя. При передаче от слоя $i$ к слою $j$ каждый нейрон связан с каждым; веса образуют матрицу $W_{ij}$.
 
-Вход нейрона $\bar{j}$:
+Вход нейрона $j$:
 
-$$
-S_{\bar{j}} = \sum_i x_i W_{\bar{i}\bar{j}} \tag{5}
-$$
+$$S_j = \sum_i x_i W_{ij} \qquad (5)$$
 
 Выход:
 
-$$
-y_{\bar{j}} = f(S_{\bar{j}}) \tag{6}
-$$
+$$y_j = f(S_j) \qquad (6)$$
 
 Для корректной работы при нулевых входах добавляется нейрон смещения (bias) с выходом $1$:
 
-$$
-S_{\bar{j}} = \sum_i x_i W_{\bar{i}\bar{j}} + W_{1i\bar{j}} \tag{7}
-$$
+$$S_j = \sum_i x_i W_{ij} + W_{0j} \qquad (7)$$
 
 Даже при всех $x_i = 0$ сигнал равен обучаемому весу смещения. Bias сдвигает порог активации влево или вправо.
 
@@ -134,156 +120,81 @@ $$
 
 Нейрон смещения входит в обе матрицы.
 
-**Прямой прогон (forward pass):** сигнал идёт слева направо; для каждой пары слоёв считаются $S$ и $x$ по формулам $(7)$ и $(6)$.
+**Прямой прогон (forward pass):** сигнал идёт слева направо; для каждой пары слоёв считаются $S$ и $x$ по формулам (7) и (6).
 
 Схема прямого прогона:
 
-$$
-\tilde{X} = [1 \mid X]
-\quad\to\quad
-S_h = \tilde{X}\,W_1
-\quad\to\quad
-A_h = \sigma(S_h)
-$$
+$$\tilde{X} = [1 \mid X] \to S_h = \tilde{X} W_1 \to A_h = \sigma(S_h)$$
 
-$$
-\tilde{X}_h = [1 \mid A_h]
-\quad\to\quad
-S_{out} = \tilde{X}_h\,W_2
-\quad\to\quad
-A_{out} = \sigma(S_{out})
-$$
+$$\tilde{X}_h = [1 \mid A_h] \to S_{out} = \tilde{X}_h W_2 \to A_{out} = \sigma(S_{out})$$
 
 ### 4. Целевая функция
 
 Для одного образца датасета ошибка - сумма квадратов отклонений по выходным нейронам $k$:
 
-$$
-E(\{W\}) = \sum_k (t_k - x_k)^2 \tag{8}
-$$
+$$E(W) = \sum_k (t_k - x_k)^2 \qquad (8)$$
 
 где $t_k$ - эталон, $x_k$ - выход сети.
 
 Суммарная ошибка по датасету:
 
-$$
-E_\Sigma(\{W\}) = \sum_d E_d(\{W\}) \tag{9}
-$$
+$$E_{\Sigma}(W) = \sum_d E_d(W) \qquad (9)$$
 
 ### 5. Градиентный спуск
 
 Обновление весов:
 
-$$
-\{W\}' = \{W\} - \nabla E \tag{10}
-$$
+$$W' = W - \nabla E \qquad (10)$$
 
-где $\nabla E$ - градиент целевой функции по параметрам $\{W\}$. Нужно вычислить частные производные $\partial E / \partial W$ для каждого элемента каждой матрицы весов.
+где $\nabla E$ - градиент целевой функции по параметрам $W$. Нужно вычислить частные производные $\partial E / \partial W$ для каждого элемента каждой матрицы весов.
 
 ### 6. Алгоритм обратного распространения ошибки
 
 Производные считаются справа налево: от выходного слоя к входному. Рассмотрим слои $\ldots \to q \to p \to k$, где $k$ - выходной.
 
-#### Шаг 1. Градиент последней матрицы $W_{\bar{p}\bar{k}}$
+#### Шаг 1. Градиент последней матрицы $W_{pk}$
 
 По правилу цепочки:
 
-$$
-\frac{\partial E}{\partial W_{\bar{p}\bar{k}}}
-=
-\frac{\partial E}{\partial S_{\bar{k}}}
-\cdot
-\frac{\partial S_{\bar{k}}}{\partial W_{\bar{p}\bar{k}}} \tag{11}
-$$
+$$\frac{\partial E}{\partial W_{pk}} = \frac{\partial E}{\partial S_k} \cdot \frac{\partial S_k}{\partial W_{pk}} \qquad (11)$$
 
 Правый множитель:
 
-$$
-\frac{\partial S_{\bar{k}}}{\partial W_{\bar{p}\bar{k}}} = x_{\bar{p}} \tag{12}
-$$
+$$\frac{\partial S_k}{\partial W_{pk}} = x_p \qquad (12)$$
 
 Отсюда:
 
-$$
-\frac{\partial E}{\partial W_{\bar{p}\bar{k}}}
-=
-\frac{\partial E}{\partial S_{\bar{k}}} \cdot x_{\bar{p}} \tag{13}
-$$
+$$\frac{\partial E}{\partial W_{pk}} = \frac{\partial E}{\partial S_k} \cdot x_p \qquad (13)$$
 
 Ошибка нейрона $k$ снова через цепочку:
 
-$$
-\frac{\partial E}{\partial S_{\bar{k}}}
-=
-\frac{\partial E}{\partial x_{\bar{k}}}
-\cdot
-\frac{\partial x_{\bar{k}}}{\partial S_{\bar{k}}} \tag{14}
-$$
+$$\frac{\partial E}{\partial S_k} = \frac{\partial E}{\partial x_k} \cdot \frac{\partial x_k}{\partial S_k} \qquad (14)$$
 
-Второй множитель - производная активации в точке $S_{\bar{k}}$. Первый берётся из $(8)$, так как $x_{\bar{k}}$ явно входит в целевую функцию:
+Второй множитель - производная активации в точке $S_k$. Первый берётся из (8), так как $x_k$ явно входит в целевую функцию:
 
-$$
-\frac{\partial E}{\partial S_{\bar{k}}}
-=
-\frac{\partial E}{\partial x_{\bar{k}}}
-\cdot
-\left.\frac{\partial f}{\partial S}\right|_{S = S_{\bar{k}}} \tag{15}
-$$
+$$\frac{\partial E}{\partial S_k} = \frac{\partial E}{\partial x_k} \cdot \sigma'(S_k) \qquad (15)$$
 
-Для градиента последней матрицы достаточно знать $x_{\bar{p}}$ и $\partial E / \partial S_{\bar{k}}$.
+Для градиента последней матрицы достаточно знать $x_p$ и $\partial E / \partial S_k$.
 
-#### Шаг 2. Производная по элементу $W_{\bar{q}\bar{p}}$ (слой левее)
+#### Шаг 2. Производная по элементу $W_{qp}$ (слой левее)
 
-$$
-\frac{\partial E}{\partial W_{\bar{q}\bar{p}}}
-=
-\frac{\partial E}{\partial S_{\bar{p}}}
-\cdot
-\frac{\partial S_{\bar{p}}}{\partial W_{\bar{q}\bar{p}}} \tag{16}
-$$
+$$\frac{\partial E}{\partial W_{qp}} = \frac{\partial E}{\partial S_p} \cdot \frac{\partial S_p}{\partial W_{qp}} \qquad (16)$$
 
-$$
-\frac{\partial S_{\bar{p}}}{\partial W_{\bar{q}\bar{p}}} = x_{\bar{q}} \tag{17}
-$$
+$$\frac{\partial S_p}{\partial W_{qp}} = x_q \qquad (17)$$
 
-$$
-\frac{\partial E}{\partial W_{\bar{q}\bar{p}}}
-=
-\frac{\partial E}{\partial S_{\bar{p}}} \cdot x_{\bar{q}} \tag{18}
-$$
+$$\frac{\partial E}{\partial W_{qp}} = \frac{\partial E}{\partial S_p} \cdot x_q \qquad (18)$$
 
-Вес $W_{\bar{q}\bar{p}}$ влияет на нейрон $\bar{p}$, а через него - на все нейроны слоя $k$, поэтому:
+Вес $W_{qp}$ влияет на нейрон $p$, а через него - на все нейроны слоя $k$, поэтому:
 
-$$
-\frac{\partial E}{\partial S_{\bar{p}}}
-=
-\sum_k
-\frac{\partial E}{\partial S_k}
-\cdot
-\frac{\partial S_k}{\partial S_{\bar{p}}} \tag{19}
-$$
+$$\frac{\partial E}{\partial S_p} = \sum_k \frac{\partial E}{\partial S_k} \cdot \frac{\partial S_k}{\partial S_p} \qquad (19)$$
 
-$$
-\frac{\partial S_k}{\partial S_{\bar{p}}}
-=
-\frac{\partial S_k}{\partial x_{\bar{p}}}
-\cdot
-\frac{\partial x_{\bar{p}}}{\partial S_{\bar{p}}} \tag{20}
-$$
+$$\frac{\partial S_k}{\partial S_p} = \frac{\partial S_k}{\partial x_p} \cdot \frac{\partial x_p}{\partial S_p} \qquad (20)$$
 
-$$
-\frac{\partial S_k}{\partial x_{\bar{p}}} = W_{\bar{p}k} \tag{21}
-$$
+$$\frac{\partial S_k}{\partial x_p} = W_{pk} \qquad (21)$$
 
-Подставляя $(20)$ и $(21)$ в $(19)$ и вынося производную активации:
+Подставляя (20) и (21) в (19) и вынося производную активации:
 
-$$
-\frac{\partial E}{\partial S_{\bar{p}}}
-=
-\left.\frac{\partial f}{\partial S}\right|_{S = S_{\bar{p}}}
-\sum_k
-\frac{\partial E}{\partial S_k}\, W_{\bar{p}k} \tag{22}
-$$
+$$\frac{\partial E}{\partial S_p} = \sigma'(S_p) \sum_k \frac{\partial E}{\partial S_k} W_{pk} \qquad (22)$$
 
 Это ключевое соотношение: ошибка $\partial E / \partial S_k$ выходного слоя передаётся на предыдущий слой теми же весами, что использовались при прямом прогоне - отсюда название **обратное распространение ошибки** (error backpropagation).
 
@@ -291,43 +202,26 @@ $$
 
 Для следующей матрицы формулы те же со сдвигом индексов на один слой влево:
 
-$$
-\frac{\partial E}{\partial W_{\bar{m}\bar{q}}}
-=
-x_{\bar{m}}
-\cdot
-\left(\frac{\partial E}{\partial S}\right)_{\bar{q}} \tag{23}
-$$
+$$\frac{\partial E}{\partial W_{mq}} = x_m \cdot \left( \frac{\partial E}{\partial S} \right)_q \qquad (23)$$
 
-$$
-\left(\frac{\partial E}{\partial S}\right)_{\bar{q}}
-=
-\left.\frac{\partial f}{\partial S}\right|_{S = S_{\bar{q}}}
-\sum_p
-\left(\frac{\partial E}{\partial S}\right)_p W_{\bar{q}p} \tag{24}
-$$
+$$\left( \frac{\partial E}{\partial S} \right)_q = \sigma'(S_q) \sum_p \left( \frac{\partial E}{\partial S} \right)_p W_{qp} \qquad (24)$$
 
 Зная вектор $\partial E / \partial S$ одного слоя, можно получить такой же вектор для слоя левее. Структура сохраняется для любого числа слоёв.
 
 #### Шаг 4. Итоговый алгоритм
 
-1. **Прямой прогон** (слева направо): подать вход, последовательно вычислить $S$ и $x$ по $(7)$ и $(6)$, сохранить $S$, $x$ и $\partial f / \partial S$.
-2. **Обратный прогон** (справа налево): найти $\partial E / \partial S$ для выхода по $(14)$-$(15)$; двигаясь влево, считать $\partial E / \partial S$ по $(22)$; затем для каждой матрицы получить градиент по $(13)$ и $(18)$.
+1. **Прямой прогон** (слева направо): подать вход, последовательно вычислить $S$ и $x$ по (7) и (6), сохранить $S$, $x$ и $\partial f / \partial S$.
+2. **Обратный прогон** (справа налево): найти $\partial E / \partial S$ для выхода по (14)-(15); двигаясь влево, считать $\partial E / \partial S$ по (22); затем для каждой матрицы получить градиент по (13) и (18).
 
-Суммируя градиенты по элементам мини-батча, получаем $\partial E / \partial W$ и делаем шаг $(10)$.
+Суммируя градиенты по элементам мини-батча, получаем $\partial E / \partial W$ и делаем шаг (10).
 
 Суммарный градиент по датасету:
 
-$$
-\frac{\partial E_\Sigma}{\partial \{W\}}
-=
-\sum_d
-\frac{\partial E_d}{\partial \{W\}} \tag{25}
-$$
+$$\frac{\partial E_{\Sigma}}{\partial W} = \sum_d \frac{\partial E_d}{\partial W} \qquad (25)$$
 
 ### 7. Мини-батчи и контроль переобучения
 
-Датасет делится на мини-батчи. Внутри батча для каждого образца $d$ независимо считается $\partial E_d / \partial \{W\}$. После батча производные суммируются по $(25)$, затем выполняется один шаг $(10)$.
+Датасет делится на мини-батчи. Внутри батча для каждого образца $d$ независимо считается $\partial E_d / \partial W$. После батча производные суммируются по (25), затем выполняется один шаг (10).
 
 Для контроля переобучения выборка делится на обучающую и тестовую. На тесте веса не обновляются: пока модель обобщает, $E_{test}$ убывает вместе с $E_{train}$; при переобучении $E_{test}$ растёт, а $E_{train}$ продолжает падать. Оптимальная точка остановки - минимум $E_{test}$. В коде: ранняя остановка, если $E_{test}$ не улучшается `patience = 5` эпох подряд.
 
@@ -335,19 +229,15 @@ $$
 
 Датасет строится скользящим окном. На вход подаётся $N_{IN}$ точек, на выход - $N_{OUT}$ точек. $N_{CROSS}$ точек одновременно входят и во вход, и в цель (перекрёстные). Шаблон сдвигается на 1 точку вправо.
 
-При $N_{IN} = 10$, $N_{OUT} = 5$, $N_{CROSS} = 3$: вход - точки $1$-$10$, выход - точки $8$-$13$ (из них $8$-$10$ перекрёстные, $11$-$13$ - будущие).
+При $N_{IN} = 10$, $N_{OUT} = 5$, $N_{CROSS} = 3$: вход - точки 1-10, выход - точки 8-13 (из них 8-10 перекрёстные, 11-13 - будущие).
 
-Нормировка в диапазон $[\Delta,\, 1 - \Delta]$:
+Нормировка в диапазон $[\Delta, 1 - \Delta]$:
 
-$$
-z = \Delta + \frac{x - x_{min}}{x_{max} - x_{min}}\,(1 - 2\Delta) \tag{26}
-$$
+$$z = \Delta + \frac{x - x_{min}}{x_{max} - x_{min}} (1 - 2\Delta) \qquad (26)$$
 
-Параметр $\Delta = 0.05$ не даёт данным попадать в насыщенные зоны сигмоиды у $0$ и $1$, где градиент мал. Обратная нормировка:
+Параметр $\Delta = 0.05$ не даёт данным попадать в насыщенные зоны сигмоиды у 0 и 1, где градиент мал. Обратная нормировка:
 
-$$
-x = \frac{z - \Delta}{1 - 2\Delta}\,(x_{max} - x_{min}) + x_{min} \tag{27}
-$$
+$$x = \frac{z - \Delta}{1 - 2\Delta} (x_{max} - x_{min}) + x_{min} \qquad (27)$$
 
 ---
 
